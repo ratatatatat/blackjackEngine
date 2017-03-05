@@ -2,8 +2,8 @@
 
 var RSVP = require('rsvp');
 
-class hand{
-	constructor(){
+module.exports = class hand{
+	constructor(initHandArray){
 		this._handCards = [];
 		this._count = [];
 		this._status = 'in-game';
@@ -25,6 +25,28 @@ class hand{
 	};
 	getCount(){
 		return this._count;
+	};
+	getHand(){
+		return this._handCards;
+	};
+	isSplittable(callback){
+		var cardArray = this._handCards;
+		// console.log("cardArray",cardArray);
+		if((cardArray.length == 2) && (cardArray[0]['name'] == cardArray[1]['name'])){
+			callback(true);
+		}else{
+			callback(false);
+		}	
+	};
+	isBlackJack(callback){
+		var countArray = this._count;
+		var handArray = this._handCards;
+		if((handArray.length == 2) && (countArray.indexOf(21) != -1)){
+			console.log("Should be returning blackjack")
+			callback(true);
+		}else{
+			callback(false);
+		}
 	};
 	//All These Functions Are Related To Getting Count Values
 	static _seperateCards(handArray){
@@ -98,13 +120,23 @@ class hand{
 		}
 	};
 	/// End of Count Functions
-}
+};
 
-var Hand = new hand();
-var handArray = [{'name':'A'},{'name':'A'}];
-handArray.forEach(function(element,index){
-	Hand.addCard(element,function(){
-		var count = Hand.getCount();
-		console.log("count: ", count);		
-	});
-});
+
+// var Hand = new hand();
+// var handStack = [{'name':'A'},{'name':'10'}];
+// handStack.forEach(function(element,index){
+// 	Hand.addCard(element,function(){
+// 		var count = Hand.getCount();
+// 		console.log("count: ", count);
+// 		Hand.isBlackJack(function(bJ){
+// 			console.log("blackJack?",bJ);
+// 		});		
+// 	});
+// });
+// Hand.isSplittable(function(bSplit){
+// 	console.log("splittable",bSplit);
+// });	
+// Hand.isBlackJack(function(bJ){
+// 	console.log("blackJack?",bJ);
+// });	
