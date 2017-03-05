@@ -3,10 +3,12 @@ var RSVP = require('rsvp');
 var Hand = require('./hand.js');
 // var hand = new Hand();
 
-class bet{
-	constructor(betSize){
+module.exports = class bet{
+	constructor(betSize,_id,type){
 		console.log("Constructor gets called");
 		this._bet = betSize;
+		this._id = _id;
+		this._type = type;//regular,double-down,split
 		this._hand = new Hand();
 	};
 	getBetSize(){
@@ -23,7 +25,11 @@ class bet{
 	};
 	getHandObj(){
 		return this._hand;
-	}
+	};
+	doubleDown(){
+		this._bet = 2 * this._bet;
+		this._type = 'double-down';
+	};
 };
 
 var Bet = new bet(45);

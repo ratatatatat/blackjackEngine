@@ -1,23 +1,26 @@
 'use strict'
 var RSVP = require('rsvp');
-
-
+var Bet = require('./bet.js');
 
 class player{
-	constructor(type,bankroll){
-		// Id
-		// Name
-		//A player has a bankroll and
-		// can place bets 
-		// and perform actions on those bets
+	constructor(type,bankroll,name){
+		this._bets = []; // Bets Array, A player can have multiple bets 
+		this._bankRoll = bankroll; // Player's initial bankroll
+		this._name = name; //Player's name
+		this._id = id; //player's id
 	};
+	createBet(betSize){
+		var betId = this._bets.length;
+		var newBet = new Bet(betSize,betId,'regular')
+		this._bets.push(newBet);
+	};
+
 	//Actions:
 	//	-Hit
 	//	-Stand
 	//	-Surrender
 	//	-Split
 	//	-Double Down
-	//	-Split
 	//All These Functions Are Related To Getting Count Values
 	payPlayer(pot){
 		this._bankRoll = this._bankRoll + pot;
