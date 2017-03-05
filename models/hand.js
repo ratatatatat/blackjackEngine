@@ -1,25 +1,26 @@
 'use strict'
+
 var RSVP = require('rsvp');
 
-
-
-class player{
-	constructor(type,bankroll){
-		this._type = type;
-		this._hands = 0;
+class hand{
+	constructor(){
 		this._handCards = [];
 		this._count = [];
-		if(type == 'dealer'){
-			this._bankroll = bankroll;
-		}
+		this._status = 'in-game';
 	};
-	hit(card,callback){
-		this._handCards.push(card);
-		var handObj = player._seperateCards(this._handCards);
-		// this._count = player._makeCount(handObj);
-		player._makeCount(handObj,function(countArray){
-			this._count = countArray;
-			callback();
+	addCard(cardObj,callback){
+		this._handCards.push(cardObj);
+		var handObj = hand._seperateCards(this._handCards);
+		hand._makeCount(handObj,function(countArray){
+			this._count = [];
+			countArray.forEach(function(element,index){
+				if(element < 22){
+					this._count.push(element)
+				}
+				if(index == countArray.length -1){
+					callback();
+				}
+			}.bind(this));
 		}.bind(this));
 	};
 	getCount(){
@@ -52,18 +53,22 @@ class player{
 		var aceCountArray = handObj['aces'];
 		var countPromise = new RSVP.Promise(function(fulfill, reject) {
 			var count = 0;
-			baseCountArray.forEach(function(element,index){
-				var cardValue = player._convertValue(element);
-				count = count + cardValue[0];
-				if(index == (baseCountArray.length -1)){
-					fulfill(count);
-				}
-			});
+			if(baseCountArray.length == 0){
+				fulfill(count);
+			}else{
+				baseCountArray.forEach(function(element,index){
+					var cardValue = hand._convertValue(element);
+					count = count + cardValue[0];
+					if(index == (baseCountArray.length -1)){
+						fulfill(count);
+					}
+				});
+			}
 		});
 
 		countPromise.then(function(count) {
 			// callback(null,count)
-			player._countPermutate(count,aceCountArray,callback);  
+			hand._countPermutate(count,aceCountArray,callback);  
 		}, null);
 	};
 	static _countPermutate(baseCount,aceArray,callback){
@@ -85,7 +90,6 @@ class player{
 					aceCount1 = aceCount1 + 1;
 					aceCount2 = aceCount2 + 1;
 					callback([aceCount1,aceCount2]);
-					// callback(null,this._count);
 				}else{
 					aceCount1 = aceCount1 + 1;
 					aceCount2 = aceCount2 + 11;
@@ -94,14 +98,13 @@ class player{
 		}
 	};
 	/// End of Count Functions
-};
+}
 
-var dealer = new player('dealer',0);
-var handArray = [{'name':'K'},{'name':'3'},{'name':'A'},{'name':'A'}];
+var Hand = new hand();
+var handArray = [{'name':'A'},{'name':'A'}];
 handArray.forEach(function(element,index){
-	dealer.hit(element,function(){
-		var count = dealer.getCount();
+	Hand.addCard(element,function(){
+		var count = Hand.getCount();
 		console.log("count: ", count);		
 	});
-
 });
