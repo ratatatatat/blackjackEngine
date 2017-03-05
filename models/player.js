@@ -5,12 +5,23 @@ var RSVP = require('rsvp');
 
 class player{
 	constructor(type,bankroll){
+		// Id
+		// Name
 		//A player has a bankroll and
 		// can place bets 
 		// and perform actions on those bets
 	};
+	//Actions:
+	//	-Hit
+	//	-Stand
+	//	-Surrender
+	//	-Split
+	//	-Double Down
+	//	-Split
 	//All These Functions Are Related To Getting Count Values
-
+	payPlayer(pot){
+		this._bankRoll = this._bankRoll + pot;
+	}
 	/// End of Count Functions
 };
 
