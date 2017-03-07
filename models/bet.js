@@ -11,6 +11,12 @@ module.exports = class bet{
 		this._type = type;//regular,double-down,split
 		this._hand = new Hand();
 	};
+	setActions(betActions){
+		this._actions = betActions; //An array of possible actions
+	};
+	getActions(){		
+		return this._actions;
+	};
 	getBetSize(){
 		return this._bet;
 	};
@@ -32,10 +38,14 @@ module.exports = class bet{
 	};
 };
 
-var Bet = new bet(45);
+
+
+
+var Bet = new bet(45,1,'regular');
 Bet.hitHand({'name':'A'},function(){
 	console.log(Bet.getScore());
 });
+console.log("betId",Bet._id);
 console.log(Bet.getBetSize());
 setTimeout(function(){
 	Bet.hitHand({'name':'10'},function(){
