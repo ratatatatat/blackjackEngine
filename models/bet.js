@@ -41,17 +41,17 @@ module.exports = class bet{
 
 
 
-var Bet = new bet(45,1,'regular');
-Bet.hitHand({'name':'A'},function(){
-	console.log(Bet.getScore());
-});
-console.log("betId",Bet._id);
-console.log(Bet.getBetSize());
-setTimeout(function(){
-	Bet.hitHand({'name':'10'},function(){
-		console.log(Bet.getScore());
-	});
-},1000);
-setTimeout(function(){
-	console.log(Bet.getHand());
-},3000);
+// var Bet = new bet(45,1,'regular');
+// Bet.hitHand({'name':'A'},function(){
+// 	console.log(Bet.getScore());
+// });
+// console.log("betId",Bet._id);
+// console.log(Bet.getBetSize());
+// setTimeout(function(){
+// 	Bet.hitHand({'name':'10'},function(){
+// 		console.log(Bet.getScore());
+// 	});
+// },1000);
+// setTimeout(function(){
+// 	console.log(Bet.getHand());
+// },3000);

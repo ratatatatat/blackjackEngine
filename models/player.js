@@ -2,8 +2,9 @@
 var RSVP = require('rsvp');
 var Bet = require('./bet.js');
 
-class player{
-	constructor(type,bankroll,name){
+module.exports = class player{
+	constructor(type,bankroll,name,id){
+		this._type = type;
 		this._bets = []; // Bets Array, A player can have multiple bets 
 		this._bankRoll = bankroll; // Player's initial bankroll
 		this._name = name; //Player's name
@@ -21,7 +22,7 @@ class player{
 		return this._bets;
 	};
 	getOneBet(betId){
-		for (var i = = 0; i < this._bets.length; i++) {
+		for (var i = 0; i < this._bets.length; i++) {
 			if(this._bets[i] == betId){
 				return this._bets[i];
 			}
@@ -45,12 +46,12 @@ class player{
 	};
 };
 
-var dealer = new player('dealer',0);
-var handArray = [{'name':'K'},{'name':'3'},{'name':'A'},{'name':'A'}];
-handArray.forEach(function(element,index){
-	dealer.hit(element,function(){
-		var count = dealer.getCount();
-		console.log("count: ", count);		
-	});
+// var dealer = new player('dealer',0);
+// var handArray = [{'name':'K'},{'name':'3'},{'name':'A'},{'name':'A'}];
+// handArray.forEach(function(element,index){
+// 	dealer.hit(element,function(){
+// 		var count = dealer.getCount();
+// 		console.log("count: ", count);		
+// 	});
 
-});
+// });
