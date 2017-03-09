@@ -75,7 +75,12 @@ function table(config){
 				console.log("count", count);
 			})
 		})
-	}
+	};
+
+	this.firstDeal = function(){
+		this.dealTable();
+		this.dealTable();
+	};
 
 };
 
