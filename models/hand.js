@@ -15,7 +15,7 @@ module.exports = class hand{
 			this._count = [];
 			countArray.forEach(function(element,index){
 				if(element < 22){
-					this._count.push(element)
+					this._count.push(element);
 				}
 				if(index == countArray.length -1){
 					callback();
@@ -70,6 +70,18 @@ module.exports = class hand{
 			return [Number(cardObj['name'])];
 		}
 	};
+	static cleanCount(countArray,callback){
+		var cleanArray = [];
+		countArray.forEach(function(element,index){
+			if(element < 22){
+				cleanArray.push(element);
+			}
+			if(index == countArray.length -1){
+				callback(cleanArray);
+			}
+		})
+	}
+
 	static _makeCount(handObj,callback){
 		var baseCountArray = handObj['nonAces'];
 		var aceCountArray = handObj['aces'];

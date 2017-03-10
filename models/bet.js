@@ -9,10 +9,15 @@ module.exports = class bet{
 		this._bet = betSize;
 		this._id = _id;
 		this._type = type;//regular,double-down,split
+		this._status = 'live' // can be live, blackjack, bust, won, lost .
 		this._hand = new Hand();
 	};
 	setActions(betActions){
 		this._actions = betActions; //An array of possible actions
+	};
+	setStatus(status){
+		console.log("should be setting the following status: ", status);
+		this._status = status;
 	};
 	getActions(){		
 		return this._actions;

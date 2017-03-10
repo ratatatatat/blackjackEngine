@@ -70,17 +70,52 @@ function table(config){
 				var bet = element;
 				var hand = bet._hand;
 				var count = hand.getCount();
-				console.log(hand);
-				console.log("Player", player);
-				console.log("count", count);
+				// console.log(hand);
+				// console.log("Player", player);
+				// console.log("count", count);
 			})
-		})
+		});
 	};
 
 	this.firstDeal = function(){
 		this.dealTable();
 		this.dealTable();
 	};
+
+	this.genActions = function(bet){
+		//Generic function for determining actions
+		// if(bet._type == 'stand'){//This type means no action return null array;
+		// 	var actions = [];
+		// 	return actions;
+		// }else if(bet._type == 'split'){
+		// 	// You have to hit once you split!!!!
+		// 	var actions = ['hit'];
+		// }else if(bet._type)
+
+	};
+
+	this.checkStatus = function(){
+		//Check all bets on the table for Blackjack and mark bets as win,lost 
+		this.players.forEach(function(element){
+			var player = element;
+			player._bets.forEach(function(element){
+				var bet = element;
+				var hand = bet._hand;
+				var count = hand.getCount();
+				if((hand._handCards.length == 2) && (count.indexOf(21) != -1)){
+					bet.setStatus('blackjack');
+				}else if((hand._handCards.length > 2) && (count.length == 0)){
+					console.log("should be setting bust");
+					bet.setStatus('bust');
+				}else{
+					console.log("should be setting live");
+					bet.setStatus('live');
+				}
+			})
+		});
+	};
+
+
 
 };
 
@@ -104,9 +139,17 @@ setTimeout(function(){
 	newTable.startGame();
 	newTable.dealTable();
 	newTable.dealTable();
+	newTable.dealTable();
 },2000);
 setTimeout(function(){
 	newTable.getCounts();
+	newTable.checkStatus();
+	newTable.players.forEach(function(element){
+		var player = element;
+		player._bets.forEach(function(bet){
+			console.log(bet);
+		});
+	});
 },3000);
 // newTable.startGame();
 // console.log("newPlayers",newTable.players);
