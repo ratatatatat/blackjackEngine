@@ -115,6 +115,68 @@ function table(config){
 		});
 	};
 
+	this.decideActions = function(bet){
+		var actions = [];
+		if(bet.setStatus == 'bust' || bet.setStatus == 'blackjack'){
+			return actions;
+		}else {
+			var hand = bet._hand._handCards;
+			var count = bet._hand.getCount();
+			var actions = this.constructAction(hand,count);
+			return actions;
+		}
+	};
+
+	this.constructAction = function(hand,count){
+		var actions = ['stand','hit'];
+		if(this.isSplittable()){
+			actions.push('split');
+		}
+		if(this.isDoubleDown(hand,count)){
+			actions.push('double-down');
+		}
+		if(this.offerInsurance()){
+			actions.push('insurance');
+		}
+		return actions;
+
+	};
+
+	this.isDoubleDown = function(hand,count){
+		if(hand.length == 2 || count.indexOf(9) != -1 || count.indexOf(10) != -1 || count.indexOf(11) != 11){
+			return true;
+		}else{
+			return false;
+		}
+	};
+
+	this.isSplittable = function(hand){
+		var cardArray = hand;
+		// console.log("cardArray",cardArray);
+		if((cardArray.length == 2) && (cardArray[0]['name'] == cardArray[1]['name'])){
+			return true;
+		}else{
+			return false;
+		}	
+	};
+
+	this.offerInsurance = function(){
+		//Look at the dealer's hand.
+		// IMPLEMENT LATER
+		return false;
+	};
+
+	this.engagePlayer = function(playerIndex){
+		var player = this.players[playerIndex];
+		//Start the players's bets:
+		var bets = player._bets;
+		bets.forEach(function(element,index){
+			var bet = element;
+			var actions = this.decideActions(bet);
+			
+		});
+	};
+
 
 
 };
