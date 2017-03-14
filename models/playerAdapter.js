@@ -1,10 +1,6 @@
 'use strict'
 var playerCore = require('./player.js');
 var readline = require('readline');
-// var rl = readline.createInterface({
-//   input: process.stdin,
-//   output: process.stdout
-// });
 
 module.exports = class playerAdapter{
 	constructor(name,id){

@@ -107,6 +107,8 @@ function table(config){
 	this.setBetStatus = function(bet){
 		var hand = bet._hand;
 		var count = hand.getCount();
+		console.log("hand after hit,",hand.getHand());
+		console.log("count",count);
 		if((hand._handCards.length == 2) && (count.indexOf(21) != -1)){
 			bet.setStatus('blackjack');
 		}else if((hand._handCards.length > 2) && (count.length == 0)){
@@ -119,14 +121,16 @@ function table(config){
 	};
 
 	this.decideActions = function(bet){
-		// console.log("bet",bet);
+		console.log("bet",bet);
+		console.log(bet._status);
 		var actions = [];
 		if(bet._status == 'bust' || bet._status == 'blackjack' || bet._status == 'stand'){
 			return actions;
-		}else {
+		}else{
+			console.log("Inside the decideActions elese");
 			var hand = bet._hand._handCards;
 			var count = bet._hand.getCount();
-			var actions = this.constructAction(bet,hand,count);
+			actions = this.constructAction(bet,hand,count);
 			return actions;
 		}
 	};
@@ -134,12 +138,11 @@ function table(config){
 	this.constructAction = function(bet,hand,count){
 		var actions = ['stand'];
 		actions.push(this.isHittable(bet));
-		// actions.push(this.isHittable(bet));
 		// if(this.isSplittable()){
 		// 	actions.push('split');
 		// }
-		if(this.isDoubleDown(hand,count)){
-			actions.push('double-down');
+		if(this.isDoubleDown(hand,count)) {
+			actions.push('double down');
 		}
 		// if(this.offerInsurance()){
 		// 	actions.push('insurance');
@@ -190,6 +193,7 @@ function table(config){
 
 	this.playLoop = function(player,bet){
 		// console.log("Inside playLoop,", player,bet);
+		console.log("playLoop",bet._status);
 		if(bet._status == 'bust'){
 			console.log("Just Busted")
 		}else if(bet._status == 'live'){
@@ -200,9 +204,13 @@ function table(config){
 	};
 
 	this.engageBet = function(player,bet){
+		// console.log("player",player);
+		// console.log("bet",bet);
 		var actions = this.decideActions(bet);
 		var count = bet._hand.getCount();
 		var hand = bet._hand.getHand();
+		// console.log("Inside engageBet");
+		console.log(hand);
 		this.genActionMsg(actions,hand, count,player._name,function(actionPrompt){
 			player._playerAdapter.getInput(actionPrompt,function(response){
 				console.log("Thi is the player's response: ",response);
@@ -210,7 +218,6 @@ function table(config){
 				var chosenAction = this.getChosenAction(response,actions);
 				player._playerAdapter.closeConnect(function(){
 					this.playHandler(chosenAction,bet,function(){
-						console.log("playerHandler callback gets called");
 						this.playLoop(player,bet);
 					}.bind(this));
 				}.bind(this));
@@ -239,7 +246,8 @@ function table(config){
 
 	this.hitHand = function(bet,callback){
 		var hitCard = this.deck.getCard();
-		console.log(bet);
+		// console.log(bet);
+		console.log("hitCard: ",hitCard)
 		bet._hand.addCard(hitCard,function(){
 			this.setBetStatus(bet);
 			callback();
@@ -259,6 +267,7 @@ function table(config){
 		callback();		
 	};
 
+
 	this.playHandler = function(action,bet,callback){
 		this.handlers(action,bet,callback);
 	};
@@ -277,32 +286,15 @@ function table(config){
 		}else if(action == 'stand'){
 			console.log('stand hand');
 			this.standHand(bet,callback);
-		}else if(action == 'double-down'){
+		}else if(action == 'double down'){
 			console.log("doubling bet");
 			this.doubleDownHand(bet,callback);
 		}else if(action == 'final-hit'){
 			console.log("final hit on hand");
 			this.finalHit(bet,callback);
 		}
-	};
 
-	// this.playHandler = function(action,bet){
-	// 	this.handlers[action](bet);
-	// };
-	this.getInput = function(question,callback){
-		console.log("get Input gets called!");
-		var rl = readline.createInterface({
-		  input: process.stdin,
-		  output: process.stdout
-		});
-		rl.question(question,function(answer){
-			console.log("Inside callbac for rl.question");
-			callback(answer);
-			rl.pause();
-			return;
-		});
 	};
-
 
 };
 

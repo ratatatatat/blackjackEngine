@@ -10,6 +10,7 @@ module.exports = class bet{
 		this._id = _id;
 		this._type = type;//regular,double-down,split
 		this._status = 'live' // can be live, stand, blackjack, bust, won, lost .
+		this._doubled = false;
 		this._hand = new Hand();
 		this._isDoubled = false;
 	};
