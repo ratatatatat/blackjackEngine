@@ -7,17 +7,22 @@ module.exports = class playerAdapter{
 	constructor(name,id){
 		this._name = name;
 		this._id = id;
-		this.rl = readline.createInterface({
+		// this.rl = readline.createInterface({
+		//   input: process.stdin,
+		//   output: process.stdout
+		// });
+	};
+	getInput(question,callback){
+		var rl = readline.createInterface({
 		  input: process.stdin,
 		  output: process.stdout
 		});
-	};
-	getInput(question,callback){
-		this.rl.question(question,(answer)=>{
+		rl.question(question,(answer)=>{
+			console.log("Inside getInput, ",answer);
 			callback(answer);
-			this.rl.close();
-			return;
-		})
+			rl.close();
+			// return;
+		});
 	};
 }
 

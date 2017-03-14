@@ -105,6 +105,8 @@ function table(config){
 	this.setBetStatus = function(bet){
 		var hand = bet._hand;
 		var count = hand.getCount();
+		console.log("hand after hit,",hand.getHand());
+		console.log("count",count);
 		if((hand._handCards.length == 2) && (count.indexOf(21) != -1)){
 			bet.setStatus('blackjack');
 		}else if((hand._handCards.length > 2) && (count.length == 0)){
@@ -117,23 +119,30 @@ function table(config){
 	};
 
 	this.decideActions = function(bet){
-		// console.log("bet",bet);
+		console.log("bet",bet);
+		console.log(bet._status);
 		var actions = [];
 		if(bet._status == 'bust' || bet._status == 'blackjack'){
 			return actions;
-		}else {
+		}else if(bet._status == 'live'){
 			var hand = bet._hand._handCards;
 			var count = bet._hand.getCount();
-			var actions = this.constructAction(hand,count);
+			actions = this.constructAction(bet,hand,count);
+			console.log("actions",actions);
 			return actions;
 		}
 	};
 
-	this.constructAction = function(hand,count){
-		var actions = ['stand','hit'];
-		// if(this.isSplittable()){
+	this.constructAction = function(bet,hand,count){
+		var actions = ['stand'];
+		// if(this.isSplittable(hand)){
 		// 	actions.push('split');
 		// }
+		actions.push(this.hitAction(bet));
+		if(this.isDoubleDown(hand)) {
+			actions.push('double down');
+		}
+
 		// if(this.isDoubleDown(hand,count)){
 		// 	actions.push('double-down');
 		// }
@@ -143,6 +152,15 @@ function table(config){
 		return actions;
 
 	};
+
+	this.hitAction = function(bet){
+		if(!bet._doubled){
+			return 'hit';
+		}else{
+			return 'final hit';
+		}
+	};
+
 
 	this.isDoubleDown = function(hand,count){
 		if(hand.length == 2 || count.indexOf(9) != -1 || count.indexOf(10) != -1 || count.indexOf(11) != 11){
@@ -179,10 +197,12 @@ function table(config){
 
 	this.playLoop = function(player,bet){
 		// console.log("Inside playLoop,", player,bet);
+		console.log("playLoop",bet._status);
 		if(bet._status == 'bust'){
 			console.log("Just Busted")
 		}
 		if(bet._status == 'live'){
+			console.log("should have called engageBet");
 			this.engageBet(player,bet);
 		}else{
 			return;
@@ -190,9 +210,15 @@ function table(config){
 	};
 
 	this.engageBet = function(player,bet){
+		console.log("Inside engageBet");
+		// console.log("player",player);
+		// console.log("bet",bet);
 		var actions = this.decideActions(bet);
+		console.log("actions",actions);
 		var count = bet._hand.getCount();
 		var hand = bet._hand.getHand();
+		// console.log("Inside engageBet");
+		console.log(hand);
 		this.genActionMsg(actions,hand, count,player._name,function(actionPrompt){
 			player._playerAdapter.getInput(actionPrompt,function(response){
 				console.log("Thi is the player's response: ",response);
@@ -230,6 +256,7 @@ function table(config){
 	this.hitHand = function(bet,callback){
 		var hitCard = this.deck.getCard();
 		console.log(bet);
+		console.log("hitCard: ",hitCard)
 		bet._hand.addCard(hitCard,function(){
 			this.setBetStatus(bet);
 			callback();
@@ -237,8 +264,14 @@ function table(config){
 	};
 
 	this.standHand = function(bet,callback){
-		bet._stand = 'stand';
+		bet._status = 'stand';
 		callback();		
+	};
+
+	this.doubleHand = function(bet,callback){
+		bet.doubleDown();
+		bet._status = 'live';
+		callback();
 	};
 
 	this.playHandler = function(action,bet,callback){
@@ -249,11 +282,14 @@ function table(config){
 		if(action == 'hit'){
 			console.log("hitting Hand");
 			this.hitHand(bet,callback);
-		}
-		if(action == 'stand'){
+		}else if(action == 'stand'){
 			console.log('stand hand');
 			this.standHand(bet,callback);
+		}else if(action == 'double down'){
+			console.log("double down got called");
+			this.doubleHand(bet,callback);
 		}
+
 	};
 
 	// this.playHandler = function(action,bet){
