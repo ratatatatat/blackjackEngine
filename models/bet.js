@@ -11,6 +11,7 @@ module.exports = class bet{
 		this._type = type;//regular,double-down,split
 		this._status = 'live' // can be live, stand, blackjack, bust, won, lost .
 		this._hand = new Hand();
+		this._isDoubled = false;
 	};
 	setActions(betActions){
 		this._actions = betActions; //An array of possible actions
@@ -37,9 +38,10 @@ module.exports = class bet{
 	getHandObj(){
 		return this._hand;
 	};
-	doubleDown(){
+	doubleDown(callback){
 		this._bet = 2 * this._bet;
-		this._type = 'double-down';
+		this._isDoubled = true;
+		callback();
 	};
 };
 

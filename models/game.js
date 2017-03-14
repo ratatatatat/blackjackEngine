@@ -1,6 +1,8 @@
 'use strict'
 var player = require('./player.js');
 var deck = require('./deck.js');
+var readline = require('readline');
+
 //Instantiate a game with rules(config)
 
 //
@@ -119,29 +121,38 @@ function table(config){
 	this.decideActions = function(bet){
 		// console.log("bet",bet);
 		var actions = [];
-		if(bet._status == 'bust' || bet._status == 'blackjack'){
+		if(bet._status == 'bust' || bet._status == 'blackjack' || bet._status == 'stand'){
 			return actions;
 		}else {
 			var hand = bet._hand._handCards;
 			var count = bet._hand.getCount();
-			var actions = this.constructAction(hand,count);
+			var actions = this.constructAction(bet,hand,count);
 			return actions;
 		}
 	};
 
-	this.constructAction = function(hand,count){
-		var actions = ['stand','hit'];
+	this.constructAction = function(bet,hand,count){
+		var actions = ['stand'];
+		actions.push(this.isHittable(bet));
+		// actions.push(this.isHittable(bet));
 		// if(this.isSplittable()){
 		// 	actions.push('split');
 		// }
-		// if(this.isDoubleDown(hand,count)){
-		// 	actions.push('double-down');
-		// }
+		if(this.isDoubleDown(hand,count)){
+			actions.push('double-down');
+		}
 		// if(this.offerInsurance()){
 		// 	actions.push('insurance');
 		// }
 		return actions;
+	};
 
+	this.isHittable = function(bet){
+		if(bet._isDoubled == true){
+			return 'final-hit';
+		}else{
+			return 'hit';
+		}
 	};
 
 	this.isDoubleDown = function(hand,count){
@@ -181,8 +192,7 @@ function table(config){
 		// console.log("Inside playLoop,", player,bet);
 		if(bet._status == 'bust'){
 			console.log("Just Busted")
-		}
-		if(bet._status == 'live'){
+		}else if(bet._status == 'live'){
 			this.engageBet(player,bet);
 		}else{
 			return;
@@ -198,12 +208,12 @@ function table(config){
 				console.log("Thi is the player's response: ",response);
 				//SPITS OUT INDEX OF ACTION
 				var chosenAction = this.getChosenAction(response,actions);
-				this.playHandler(chosenAction,bet,function(){
-					console.log("playerHandler callback gets called");
-					this.playLoop(player,bet);
+				player._playerAdapter.closeConnect(function(){
+					this.playHandler(chosenAction,bet,function(){
+						console.log("playerHandler callback gets called");
+						this.playLoop(player,bet);
+					}.bind(this));
 				}.bind(this));
-				// callback(player,bet);
-				// this.playLoop(player,bet);
 			}.bind(this));
 		}.bind(this));
 	};
@@ -221,7 +231,7 @@ function table(config){
 			var line = String(index) + ' ' + String(element) + '\n';
 			baseMessage = baseMessage + line;
 			if(index == actionArray.length -1){
-				baseMessage = baseMessage + '\n\n >>';
+				baseMessage = baseMessage + '\n\n >';
 				callback(baseMessage);
 			}
 		}.bind(this));
@@ -236,8 +246,16 @@ function table(config){
 		}.bind(this));	
 	};
 
+	this.finalHit = function(bet,callback){
+		var hitCard = this.deck.getCard();
+		bet._hand.addCard(hitCard,function(){
+			bet._status = 'stand';//Force a stand after this
+			callback();
+		}.bind(this));
+	};
+
 	this.standHand = function(bet,callback){
-		bet._stand = 'stand';
+		bet._status = 'stand';
 		callback();		
 	};
 
@@ -245,21 +263,45 @@ function table(config){
 		this.handlers(action,bet,callback);
 	};
 
+	this.doubleDownHand = function(bet,callback){
+		bet.doubleDown(function(){
+			this.setBetStatus(bet);
+			callback();
+		}.bind(this));
+	};
+
 	this.handlers = function(action,bet,callback){
 		if(action == 'hit'){
 			console.log("hitting Hand");
 			this.hitHand(bet,callback);
-		}
-		if(action == 'stand'){
+		}else if(action == 'stand'){
 			console.log('stand hand');
 			this.standHand(bet,callback);
+		}else if(action == 'double-down'){
+			console.log("doubling bet");
+			this.doubleDownHand(bet,callback);
+		}else if(action == 'final-hit'){
+			console.log("final hit on hand");
+			this.finalHit(bet,callback);
 		}
 	};
 
 	// this.playHandler = function(action,bet){
 	// 	this.handlers[action](bet);
 	// };
-
+	this.getInput = function(question,callback){
+		console.log("get Input gets called!");
+		var rl = readline.createInterface({
+		  input: process.stdin,
+		  output: process.stdout
+		});
+		rl.question(question,function(answer){
+			console.log("Inside callbac for rl.question");
+			callback(answer);
+			rl.pause();
+			return;
+		});
+	};
 
 
 };

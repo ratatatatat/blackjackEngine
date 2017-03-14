@@ -1,23 +1,35 @@
 'use strict'
 var playerCore = require('./player.js');
-const readline = require('readline');
-
+var readline = require('readline');
+// var rl = readline.createInterface({
+//   input: process.stdin,
+//   output: process.stdout
+// });
 
 module.exports = class playerAdapter{
 	constructor(name,id){
 		this._name = name;
 		this._id = id;
+	};
+	getInput(quest,callback){
 		this.rl = readline.createInterface({
-		  input: process.stdin,
-		  output: process.stdout
+				  input: process.stdin,
+				  output: process.stdout
+				});
+
+		this.rl.question(quest,(answer)=>{
+			console.log("Inside callbac for rl.question");
+			callback(answer);
+			// setTimeout(function(){
+			// 	rl.pause();
+			// },300);
+			// rl.pause();
+			// return;
 		});
 	};
-	getInput(question,callback){
-		this.rl.question(question,(answer)=>{
-			callback(answer);
-			this.rl.close();
-			return;
-		})
+	closeConnect(callback){
+		this.rl.close();
+		callback();
 	};
 }
 
