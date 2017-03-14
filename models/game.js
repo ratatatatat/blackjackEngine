@@ -119,7 +119,7 @@ function table(config){
 	this.decideActions = function(bet){
 		// console.log("bet",bet);
 		var actions = [];
-		if(bet.setStatus == 'bust' || bet.setStatus == 'blackjack'){
+		if(bet._status == 'bust' || bet._status == 'blackjack'){
 			return actions;
 		}else {
 			var hand = bet._hand._handCards;
@@ -178,14 +178,18 @@ function table(config){
 	};
 
 	this.playLoop = function(player,bet){
-		if(bet._status != 'stand' || bet._status != 'blackjack' || bet._status == 'bust'){
-			this.engageBet(player,bet,this.playLoop());
+		// console.log("Inside playLoop,", player,bet);
+		if(bet._status == 'bust'){
+			console.log("Just Busted")
+		}
+		if(bet._status == 'live'){
+			this.engageBet(player,bet);
 		}else{
 			return;
 		}
 	};
 
-	this.engageBet = function(player,bet,callback){
+	this.engageBet = function(player,bet){
 		var actions = this.decideActions(bet);
 		var count = bet._hand.getCount();
 		var hand = bet._hand.getHand();
@@ -194,8 +198,12 @@ function table(config){
 				console.log("Thi is the player's response: ",response);
 				//SPITS OUT INDEX OF ACTION
 				var chosenAction = this.getChosenAction(response,actions);
-				this.playHandler(chosenAction,bet);
-				callback(player,bet);
+				this.playHandler(chosenAction,bet,function(){
+					console.log("playerHandler callback gets called");
+					this.playLoop(player,bet);
+				}.bind(this));
+				// callback(player,bet);
+				// this.playLoop(player,bet);
 			}.bind(this));
 		}.bind(this));
 	};
@@ -219,29 +227,32 @@ function table(config){
 		}.bind(this));
 	};
 
-	this.hitHand = function(bet){
+	this.hitHand = function(bet,callback){
 		var hitCard = this.deck.getCard();
 		console.log(bet);
 		bet._hand.addCard(hitCard,function(){
 			this.setBetStatus(bet);
-			return;
+			callback();
 		}.bind(this));	
 	};
 
-	this.standHand = function(bet){
-		bet._stand = 'stand';		
+	this.standHand = function(bet,callback){
+		bet._stand = 'stand';
+		callback();		
 	};
 
-	this.playHandler = function(action,bet){
-		this.handlers(action,bet);
+	this.playHandler = function(action,bet,callback){
+		this.handlers(action,bet,callback);
 	};
 
-	this.handlers = function(action,bet){
+	this.handlers = function(action,bet,callback){
 		if(action == 'hit'){
-			this.hitHand(bet);
+			console.log("hitting Hand");
+			this.hitHand(bet,callback);
 		}
 		if(action == 'stand'){
-			this.standHand(bet);
+			console.log('stand hand');
+			this.standHand(bet,callback);
 		}
 	};
 
