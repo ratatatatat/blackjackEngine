@@ -30,7 +30,8 @@ function table(config){
 	this.reshuffleThreshold = config['reshuffleThreshold'];//Percentage of cards, before reshuffling with all decks.
 	this.numberOfDecks = config['numberOfDecks'];//Number of decks to use in the game. 
 	this.dealerStandRule = config['dealerStand'];//Dealer Stand Rule
-
+	//Deck Reconfig
+	this.deck = new deck(true,1);
 	this.dealer = new player('dealer',0,'house',0);
 	this.players = [];//Initialize the player array.
 
@@ -44,7 +45,7 @@ function table(config){
 
 	this.startGame = function(){
 		// Initialize the deck
-		this.deck = new deck(true,1);
+		// this.deck = new deck(true,1);
 		//Initialize dealer hand
 		this.dealer.createBet(0,'regular');
 		this.players.push(this.dealer);
@@ -57,8 +58,9 @@ function table(config){
 				var bet = element;
 				var hitCard = this.deck.getCard();
 				bet._hand.addCard(hitCard,function(){
+					this.setBetStatus(bet);
 					return;
-				});
+				}.bind(this));
 			}.bind(this));
 		}.bind(this));		
 	};
@@ -70,9 +72,6 @@ function table(config){
 				var bet = element;
 				var hand = bet._hand;
 				var count = hand.getCount();
-				// console.log(hand);
-				// console.log("Player", player);
-				// console.log("count", count);
 			})
 		});
 	};
@@ -80,18 +79,6 @@ function table(config){
 	this.firstDeal = function(){
 		this.dealTable();
 		this.dealTable();
-	};
-
-	this.genActions = function(bet){
-		//Generic function for determining actions
-		// if(bet._type == 'stand'){//This type means no action return null array;
-		// 	var actions = [];
-		// 	return actions;
-		// }else if(bet._type == 'split'){
-		// 	// You have to hit once you split!!!!
-		// 	var actions = ['hit'];
-		// }else if(bet._type)
-
 	};
 
 	this.checkStatus = function(){
@@ -115,7 +102,22 @@ function table(config){
 		});
 	};
 
+	this.setBetStatus = function(bet){
+		var hand = bet._hand;
+		var count = hand.getCount();
+		if((hand._handCards.length == 2) && (count.indexOf(21) != -1)){
+			bet.setStatus('blackjack');
+		}else if((hand._handCards.length > 2) && (count.length == 0)){
+			console.log("should be setting bust");
+			bet.setStatus('bust');
+		}else{
+			console.log("should be setting live");
+			bet.setStatus('live');
+		}
+	};
+
 	this.decideActions = function(bet){
+		// console.log("bet",bet);
 		var actions = [];
 		if(bet.setStatus == 'bust' || bet.setStatus == 'blackjack'){
 			return actions;
@@ -129,15 +131,15 @@ function table(config){
 
 	this.constructAction = function(hand,count){
 		var actions = ['stand','hit'];
-		if(this.isSplittable()){
-			actions.push('split');
-		}
-		if(this.isDoubleDown(hand,count)){
-			actions.push('double-down');
-		}
-		if(this.offerInsurance()){
-			actions.push('insurance');
-		}
+		// if(this.isSplittable()){
+		// 	actions.push('split');
+		// }
+		// if(this.isDoubleDown(hand,count)){
+		// 	actions.push('double-down');
+		// }
+		// if(this.offerInsurance()){
+		// 	actions.push('insurance');
+		// }
 		return actions;
 
 	};
@@ -166,16 +168,86 @@ function table(config){
 		return false;
 	};
 
-	this.engagePlayer = function(playerIndex){
-		var player = this.players[playerIndex];
+	this.engagePlayer = function(player){
 		//Start the players's bets:
 		var bets = player._bets;
 		bets.forEach(function(element,index){
 			var bet = element;
-			var actions = this.decideActions(bet);
-			
-		});
+			this.playLoop(player,bet)
+		}.bind(this));
 	};
+
+	this.playLoop = function(player,bet){
+		if(bet._status != 'stand' || bet._status != 'blackjack' || bet._status == 'bust'){
+			this.engageBet(player,bet,this.playLoop());
+		}else{
+			return;
+		}
+	};
+
+	this.engageBet = function(player,bet,callback){
+		var actions = this.decideActions(bet);
+		var count = bet._hand.getCount();
+		var hand = bet._hand.getHand();
+		this.genActionMsg(actions,hand, count,player._name,function(actionPrompt){
+			player._playerAdapter.getInput(actionPrompt,function(response){
+				console.log("Thi is the player's response: ",response);
+				//SPITS OUT INDEX OF ACTION
+				var chosenAction = this.getChosenAction(response,actions);
+				this.playHandler(chosenAction,bet);
+				callback(player,bet);
+			}.bind(this));
+		}.bind(this));
+	};
+
+	this.getChosenAction = function(index,actionArray){
+		return actionArray[index];
+	};
+
+	this.genActionMsg = function(actionArray,hand,count,playerName,callback){
+		var baseMessage = "Hello "+playerName+'\n';
+		baseMessage = baseMessage + "Hand: " +  String(hand) + '\n';
+		baseMessage = baseMessage + "Count " + String(count) + '\n';
+		baseMessage = baseMessage + "Please choose an action:\n";
+		actionArray.forEach(function(element,index){
+			var line = String(index) + ' ' + String(element) + '\n';
+			baseMessage = baseMessage + line;
+			if(index == actionArray.length -1){
+				baseMessage = baseMessage + '\n\n >>';
+				callback(baseMessage);
+			}
+		}.bind(this));
+	};
+
+	this.hitHand = function(bet){
+		var hitCard = this.deck.getCard();
+		console.log(bet);
+		bet._hand.addCard(hitCard,function(){
+			this.setBetStatus(bet);
+			return;
+		}.bind(this));	
+	};
+
+	this.standHand = function(bet){
+		bet._stand = 'stand';		
+	};
+
+	this.playHandler = function(action,bet){
+		this.handlers(action,bet);
+	};
+
+	this.handlers = function(action,bet){
+		if(action == 'hit'){
+			this.hitHand(bet);
+		}
+		if(action == 'stand'){
+			this.standHand(bet);
+		}
+	};
+
+	// this.playHandler = function(action,bet){
+	// 	this.handlers[action](bet);
+	// };
 
 
 
@@ -199,19 +271,27 @@ dummyPlayer.createBet(5,'regular');
 newTable.addPlayers(dummyPlayer);
 setTimeout(function(){
 	newTable.startGame();
-	newTable.dealTable();
-	newTable.dealTable();
-	newTable.dealTable();
+	newTable.firstDeal();
 },2000);
+// setTimeout(function(){
+// 	newTable.getCounts();
+// 	newTable.checkStatus();
+// 	newTable.players.forEach(function(element){
+// 		var player = element;
+// 		player._bets.forEach(function(bet){
+// 			console.log(bet);
+// 		});
+// 		return;	
+// 	});
+// },3000);
+
 setTimeout(function(){
-	newTable.getCounts();
-	newTable.checkStatus();
-	newTable.players.forEach(function(element){
+	newTable.players.forEach(function(element,index){
 		var player = element;
-		player._bets.forEach(function(bet){
-			console.log(bet);
-		});
+		if(player._type != 'dealer'){
+			newTable.engagePlayer(player);
+		}
 	});
-},3000);
+},4000);
 // newTable.startGame();
 // console.log("newPlayers",newTable.players);

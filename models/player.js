@@ -1,6 +1,7 @@
 'use strict'
 var RSVP = require('rsvp');
 var Bet = require('./bet.js');
+var playerAdapter = require('./playerAdapter.js');
 
 module.exports = class player{
 	constructor(type,bankroll,name,id){
@@ -9,6 +10,7 @@ module.exports = class player{
 		this._bankRoll = bankroll; // Player's initial bankroll
 		this._name = name; //Player's name
 		this._id = id; //player's id
+		this._playerAdapter = new playerAdapter(name,id);
 	};
 	createBet(betSize,betType){
 		var betId = this._bets.length;
@@ -44,6 +46,7 @@ module.exports = class player{
 	payPlayer(pot){
 		this._bankRoll = this._bankRoll + pot;
 	};
+	//Communication Connection
 };
 
 // var dealer = new player('dealer',0);
