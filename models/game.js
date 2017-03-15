@@ -104,7 +104,7 @@ function table(config){
 		});
 	};
 
-	this.setBetStatus = function(bet){
+	this.setBetStatus = function(bet,finalHit){
 		var hand = bet._hand;
 		var count = hand.getCount();
 		console.log("hand after hit,",hand.getHand());
@@ -115,8 +115,13 @@ function table(config){
 			console.log("should be setting bust");
 			bet.setStatus('bust');
 		}else{
-			console.log("should be setting live");
-			bet.setStatus('live');
+			if(finalHit  == true){
+				console.log('stand status get set after final hit');
+				bet.setStatus('stand')
+			}else{
+				console.log("should be setting live");
+				bet.setStatus('live');
+			}
 		}
 	};
 
@@ -138,10 +143,10 @@ function table(config){
 	this.constructAction = function(bet,hand,count){
 		var actions = ['stand'];
 		actions.push(this.isHittable(bet));
-		// if(this.isSplittable()){
-		// 	actions.push('split');
-		// }
-		if(this.isDoubleDown(hand,count)) {
+		if(this.isSplittable(hand)){
+			actions.push('split');
+		}
+		if(this.isDoubleDown(hand,count,bet)) {
 			actions.push('double down');
 		}
 		// if(this.offerInsurance()){
@@ -151,15 +156,16 @@ function table(config){
 	};
 
 	this.isHittable = function(bet){
-		if(bet._isDoubled == true){
+		if(bet._isDoubled == true || bet._type == 'split'){
 			return 'final-hit';
 		}else{
 			return 'hit';
 		}
 	};
 
-	this.isDoubleDown = function(hand,count){
-		if(hand.length == 2 || count.indexOf(9) != -1 || count.indexOf(10) != -1 || count.indexOf(11) != 11){
+	this.isDoubleDown = function(hand,count,bet){
+		console.log("count",count);
+		if((hand.length == 2 || count.indexOf(9) != -1 || count.indexOf(10) != -1 || count.indexOf(11) != 11) && bet._isDoubled == false){
 			return true;
 		}else{
 			return false;
@@ -196,6 +202,7 @@ function table(config){
 		console.log("playLoop",bet._status);
 		if(bet._status == 'bust'){
 			console.log("Just Busted")
+			return;
 		}else if(bet._status == 'live'){
 			this.engageBet(player,bet);
 		}else{
@@ -204,12 +211,9 @@ function table(config){
 	};
 
 	this.engageBet = function(player,bet){
-		// console.log("player",player);
-		// console.log("bet",bet);
 		var actions = this.decideActions(bet);
 		var count = bet._hand.getCount();
 		var hand = bet._hand.getHand();
-		// console.log("Inside engageBet");
 		console.log(hand);
 		this.genActionMsg(actions,hand, count,player._name,function(actionPrompt){
 			player._playerAdapter.getInput(actionPrompt,function(response){
@@ -217,7 +221,7 @@ function table(config){
 				//SPITS OUT INDEX OF ACTION
 				var chosenAction = this.getChosenAction(response,actions);
 				player._playerAdapter.closeConnect(function(){
-					this.playHandler(chosenAction,bet,function(){
+					this.playHandler(chosenAction,bet,player,function(){
 						this.playLoop(player,bet);
 					}.bind(this));
 				}.bind(this));
@@ -257,7 +261,8 @@ function table(config){
 	this.finalHit = function(bet,callback){
 		var hitCard = this.deck.getCard();
 		bet._hand.addCard(hitCard,function(){
-			bet._status = 'stand';//Force a stand after this
+			// bet._status = 'stand';//Force a stand after this
+			this.setBetStatus(bet,true);
 			callback();
 		}.bind(this));
 	};
@@ -267,19 +272,19 @@ function table(config){
 		callback();		
 	};
 
-
-	this.playHandler = function(action,bet,callback){
-		this.handlers(action,bet,callback);
-	};
-
-	this.doubleDownHand = function(bet,callback){
-		bet.doubleDown(function(){
-			this.setBetStatus(bet);
-			callback();
+	this.splitBet = function(bet,player,callback){
+		player.createSplitBet(bet,function(origBetId){
+			player.getSplitBet(origBetId,function(splitBetObj){
+				splitBetObj['splits'].forEach(function(splitBet){
+					this.playLoop(player,splitBet);
+					return;
+				}.bind(this));
+			}.bind(this));
 		}.bind(this));
 	};
 
-	this.handlers = function(action,bet,callback){
+
+	this.playHandler = function(action,bet,player,callback){
 		if(action == 'hit'){
 			console.log("hitting Hand");
 			this.hitHand(bet,callback);
@@ -292,8 +297,17 @@ function table(config){
 		}else if(action == 'final-hit'){
 			console.log("final hit on hand");
 			this.finalHit(bet,callback);
+		}else if(action == 'split'){
+			console.log("split the bet");
+			this.splitBet(bet,player,callback);
 		}
+	};
 
+	this.doubleDownHand = function(bet,callback){
+		bet.doubleDown(function(){
+			this.setBetStatus(bet);
+			callback();
+		}.bind(this));
 	};
 
 };
