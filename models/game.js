@@ -209,13 +209,15 @@ module.exports = function table(config){
 		return false;
 	};
 
-	this.engagePlayer = function(player){
+	this.engagePlayer = function(player,callback){
 		//Start the players's bets:
 		var bets = player._bets;
-		bets.forEach(function(element,index){
-			var bet = element;
-			this.playLoop(player,bet)
-		}.bind(this));
+		async.eachOfSeries(bets,function(item,key,cb){
+			var bet = item;
+			this.playLoop(player,bet,cb)
+		}.bind(this),function(){
+			callback();
+		});
 	};
 
 	this.playLoop = function(player,bet,callback){
@@ -301,8 +303,6 @@ module.exports = function table(config){
 			player.getSplitBet(origBetId,function(splitBetObj){
 				var splits = splitBetObj.splits;
 				async.eachOfSeries(splits,function(item,key,callback){
-					console.log("ITEM",item);
-					console.log("KEY",key);
 					this.playLoop(player,item,callback)
 				}.bind(this),function(err){
 					// callback();
