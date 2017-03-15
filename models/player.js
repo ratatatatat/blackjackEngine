@@ -38,7 +38,7 @@ module.exports = class player{
 		});
 		var splitObj = {
 			'id': origBetId,
-			'splits': [firstSplit,secondSplit]
+			'splits': new Array(firstSplit,secondSplit)
 		};
 		this._splitBets.push(splitObj);
 		//Callbacks the original betId for easy reference;

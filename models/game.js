@@ -2,6 +2,7 @@
 var player = require('./player.js');
 var deck = require('./deck.js');
 var readline = require('readline');
+var async = require('async');
 
 //Instantiate a game with rules(config)
 
@@ -217,7 +218,7 @@ module.exports = function table(config){
 		}.bind(this));
 	};
 
-	this.playLoop = function(player,bet){
+	this.playLoop = function(player,bet,callback){
 		// console.log("Inside playLoop,", player,bet);
 		console.log("playLoop",bet._status);
 		if(bet._status == 'bust'){
@@ -226,6 +227,9 @@ module.exports = function table(config){
 		}else if(bet._status == 'live'){
 			this.engageBet(player,bet);
 		}else{
+			if(typeof callback == 'function'){
+				callback();
+			}
 			return;
 		}
 	};
@@ -295,10 +299,26 @@ module.exports = function table(config){
 	this.splitBet = function(bet,player,callback){
 		player.createSplitBet(bet,function(origBetId){
 			player.getSplitBet(origBetId,function(splitBetObj){
-				splitBetObj['splits'].forEach(function(splitBet){
-					this.playLoop(player,splitBet);
+				// console.log("splitBetOBJ length",splitBetObj.splits.length);
+				// splitBetObj['splits'].forEach(function(splitBet){
+				// 	this.playLoop(player,splitBet);
+				// 	// return;
+				// }.bind(this));
+				var splits = splitBetObj.splits;
+				async.eachOfSeries(splits,function(item,key){
+					console.log("ITEM",item);
+					console.log("KEY",key);
+					this.playLoop(player,item)
+				}.bind(this),function(err){
+					// callback();
 					return;
-				}.bind(this));
+					//Final Function
+				});
+				// this.playLoop(player,splitBetObj.splits[0],function(){
+				// 	this.playLoop(player,splitBetObj.splits[1],null)
+				// }.bind(this));
+
+
 			}.bind(this));
 		}.bind(this));
 	};
