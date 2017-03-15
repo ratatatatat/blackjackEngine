@@ -29,7 +29,13 @@ module.exports = class player{
 		var betType = 'split';
 		var origBetId = bet._id;
 		var firstSplit = new Bet(wager,origBetId,betType);
+		firstSplit._hand.addCard(firstHand,function(){
+
+		});
 		var secondSplit = new Bet(wager,origBetId,betType);
+		secondSplit._hand.addCard(secondHand,function(){
+
+		});
 		var splitObj = {
 			'id': origBetId,
 			'splits': [firstSplit,secondSplit]
