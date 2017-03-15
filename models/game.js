@@ -225,7 +225,7 @@ module.exports = function table(config){
 			console.log("Just Busted")
 			return;
 		}else if(bet._status == 'live'){
-			this.engageBet(player,bet);
+			this.engageBet(player,bet,callback);
 		}else{
 			if(typeof callback == 'function'){
 				callback();
@@ -234,7 +234,7 @@ module.exports = function table(config){
 		}
 	};
 
-	this.engageBet = function(player,bet){
+	this.engageBet = function(player,bet,callback){
 		var actions = this.decideActions(bet);
 		var count = bet._hand.getCount();
 		var hand = bet._hand.getHand();
@@ -246,7 +246,7 @@ module.exports = function table(config){
 				var chosenAction = this.getChosenAction(response,actions);
 				player._playerAdapter.closeConnect(function(){
 					this.playHandler(chosenAction,bet,player,function(){
-						this.playLoop(player,bet);
+						this.playLoop(player,bet,callback);
 					}.bind(this));
 				}.bind(this));
 			}.bind(this));
@@ -299,16 +299,11 @@ module.exports = function table(config){
 	this.splitBet = function(bet,player,callback){
 		player.createSplitBet(bet,function(origBetId){
 			player.getSplitBet(origBetId,function(splitBetObj){
-				// console.log("splitBetOBJ length",splitBetObj.splits.length);
-				// splitBetObj['splits'].forEach(function(splitBet){
-				// 	this.playLoop(player,splitBet);
-				// 	// return;
-				// }.bind(this));
 				var splits = splitBetObj.splits;
-				async.eachOfSeries(splits,function(item,key){
+				async.eachOfSeries(splits,function(item,key,callback){
 					console.log("ITEM",item);
 					console.log("KEY",key);
-					this.playLoop(player,item)
+					this.playLoop(player,item,callback)
 				}.bind(this),function(err){
 					// callback();
 					return;
