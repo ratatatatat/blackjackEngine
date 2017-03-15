@@ -78,6 +78,17 @@ module.exports = class Deck{
 		}
 		return array;
 	};
+	getCertainCard(name,callback){
+		this.decks.every(function(element,index){
+			if(element.name == name){
+				callback(element);
+				this.decks.splice(index,1);
+				return false;
+			}else{
+				return true;
+			}
+		}.bind(this));
+	}
 }
 
 
