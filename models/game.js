@@ -249,12 +249,8 @@ module.exports = function table(config){
 	};
 
 	this.playLoop = function(player,bet,callback){
-		// console.log("Inside playLoop,", player,bet);
 		console.log("playLoop",bet._status);
-		if(bet._status == 'bust'){
-			console.log("Just Busted")
-			return;
-		}else if(bet._status == 'live'){
+		if(bet._status == 'live'){
 			this.engageBet(player,bet,callback);
 		}else{
 			if(typeof callback == 'function'){
@@ -330,10 +326,10 @@ module.exports = function table(config){
 		player.createSplitBet(bet,function(origBetId){
 			player.getSplitBet(origBetId,function(splitBetObj){
 				var splits = splitBetObj.splits;
-				async.eachOfSeries(splits,function(item,key,callback){
-					this.playLoop(player,item,callback)
+				async.eachOfSeries(splits,function(item,key,cb){
+					this.playLoop(player,item,cb)
 				}.bind(this),function(err){
-					// callback();
+					callback();
 					return;
 					//Final Function
 				});
@@ -373,47 +369,96 @@ module.exports = function table(config){
 		}.bind(this));
 	};
 
+	this.settlePlayerBet = function(player,bet,state,callback){
+		console.log("Inside settlePlayerBet,",bet);
+		callback = callback || function(){};
+
+		if(state == 'lost'){
+			console.log("player bankroll,",player._bankRoll);
+			player._bankRoll = player._bankRoll - bet._bet;
+			console.log("player bankroll,",player._bankRoll);
+			callback();
+		}else if(state == 'push'){
+			callback();
+			//Nothin bankroll stays same
+		}else{
+			//Won bet
+			if(bet._status == 'blackjack'){
+				console.log("player bankroll,",player._bankRoll);
+				player._bankRoll = player._bankRoll + 1.5 * bet._bet;
+				console.log("player bankroll,",player._bankRoll);
+				callback();
+			}else{
+				console.log("player bankroll,",player._bankRoll);
+				player._bankRoll = player._bankRoll + bet._bet;
+				console.log("player bankroll,",player._bankRoll);
+				callback();
+			}
+		}
+	};
+
+	this.settleTable = function(callback){
+		var dealer = this.players[0];
+		var dealerBet = dealer._bets[0];
+		var dealerBetStatus = dealerBet._status;
+		var dealerCount = Math.max(dealerBet._hand._count);
+		async.eachOfSeries(this.players,function(player,key,cb){
+			player._bets.forEach(function(bet,index){
+				var betCount = Math.max(bet._hand._count);
+				if(bet._status != 'dead'){
+					if(bet._status == 'bust'){
+						var state = 'lost'
+						this.settlePlayerBet(player,bet,state);
+					}else{
+						if(dealerBetStatus == 'bust'){
+							var state = 'won';
+							this.settlePlayerBet(player,bet,state);
+						}else{
+							if(dealerCount == betCount){
+								var state = 'push';
+								this.settlePlayerBet(player,bet,state);
+							}else if( dealerCount > betCount ){
+								var state = 'lost';
+								this.settlePlayerBet(player,bet,state);
+							}else{
+								var state = 'won';
+								this.settlePlayerBet(player,bet.state);
+							}
+						}
+					}
+				}
+			}.bind(this));
+			player._splitBets.forEach(function(splitBet,index){
+				var betCount = Math.max(bet._hand._count);
+				if(bet._status != 'dead'){
+					if(bet._status == 'bust'){
+						var state = 'lost'
+						this.settlePlayerBet(player,bet,state);
+					}else{
+						if(dealerBetStatus == 'bust'){
+							var state = 'won';
+							this.settlePlayerBet(player,bet,state);
+						}else{
+							if(dealerCount == betCount){
+								var state = 'push';
+								this.settlePlayerBet(player,bet,state);
+							}else if( dealerCount > betCount ){
+								var state = 'lost';
+								this.settlePlayerBet(player,bet,state);
+							}else{
+								var state = 'won';
+								this.settlePlayerBet(player,bet.state);
+							}
+						}
+					}
+				}
+			}.bind(this));
+			cb();
+		}.bind(this),function(err){
+			console.log("DONE SETTLING THE TABLE");
+			console.log("The players");
+			callback();
+		}.bind(this));
+	};
+
 };
-
-// var config = {
-// 	maximumPlayers: 1,
-// 	blackJackPayout: 1.5,
-// 	minBet: 5,
-// 	maxBet: 100,
-// 	removeDealt: true,
-// 	reshuffleThreshold: .25,
-// 	numberOfDecks: 1,
-// 	dealerStand: 'soft-17'
-// };
-
-// var newTable = new table(config);
-
-// var dummyPlayer = new player('player',100,'Rajiv',1);
-// dummyPlayer.createBet(5,'regular');
-// newTable.addPlayers(dummyPlayer);
-// setTimeout(function(){
-// 	newTable.startGame();
-// 	newTable.firstDeal();
-// },2000);
-// setTimeout(function(){
-// 	newTable.getCounts();
-// 	newTable.checkStatus();
-// 	newTable.players.forEach(function(element){
-// 		var player = element;
-// 		player._bets.forEach(function(bet){
-// 			console.log(bet);
-// 		});
-// 		return;	
-// 	});
-// },3000);
-
-// setTimeout(function(){
-// 	newTable.players.forEach(function(element,index){
-// 		var player = element;
-// 		if(player._type != 'dealer'){
-// 			newTable.engagePlayer(player);
-// 		}
-// 	});
-// },4000);
-// newTable.startGame();
-// console.log("newPlayers",newTable.players);
