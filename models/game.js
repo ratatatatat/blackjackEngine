@@ -146,20 +146,39 @@ module.exports = function table(config){
 		}
 	};
 
-	this.decideActions = function(bet){
+	this.decideActions = function(bet,player){
 		console.log("bet",bet);
 		console.log(bet._status);
+		var hand = bet._hand._handCards;
+		var count = bet._hand.getCount();
 		var actions = [];
-		if(bet._status == 'bust' || bet._status == 'blackjack' || bet._status == 'stand'){
+		if(player._type == 'dealer'){
+			actions = this.constructDealerActions(bet,hand,count);
 			return actions;
 		}else{
-			console.log("Inside the decideActions elese");
-			var hand = bet._hand._handCards;
-			var count = bet._hand.getCount();
-			actions = this.constructAction(bet,hand,count);
-			return actions;
+			if(bet._status == 'bust' || bet._status == 'blackjack' || bet._status == 'stand'){
+				return actions;
+			}else{
+				console.log("Inside the decideActions elese");
+				actions = this.constructAction(bet,hand,count);
+				return actions;
+			}
 		}
 	};
+
+	this.constructDealerActions = function(bet,hand,count){
+		var actions = ['stand'];
+		var standRule = 'soft-17';
+		if(standRule == 'soft-17'){
+			var countNum = Math.max(count);
+			if(countNum > 16){
+				return actions;
+			}else{
+				actions.push('hit');
+				return actions;
+			}
+		};
+	}
 
 	this.constructAction = function(bet,hand,count){
 		var actions = ['stand'];
@@ -209,6 +228,15 @@ module.exports = function table(config){
 		return false;
 	};
 
+	this.engageDealer = function(callback){
+		this.players.forEach(function(element){
+			if(element._type == 'dealer'){
+				var dealer = element;
+				this.engagePlayer(dealer,callback);
+			}
+		}.bind(this));
+	};
+
 	this.engagePlayer = function(player,callback){
 		//Start the players's bets:
 		var bets = player._bets;
@@ -237,7 +265,7 @@ module.exports = function table(config){
 	};
 
 	this.engageBet = function(player,bet,callback){
-		var actions = this.decideActions(bet);
+		var actions = this.decideActions(bet,player);
 		var count = bet._hand.getCount();
 		var hand = bet._hand.getHand();
 		console.log(hand);

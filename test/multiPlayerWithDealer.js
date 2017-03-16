@@ -34,7 +34,14 @@ setTimeout(function(){
 		var player = item;
 		if(player._type != 'dealer'){
 			newTable.engagePlayer(player,cb);
+		}else{
+			cb();
 		}
+	},function(err){
+		console.log("callback for async called");
+		newTable.engageDealer(function(){
+			console.log("Done Engaging Dealer");
+		});
 	});
 
 },4000);
