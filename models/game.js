@@ -422,7 +422,7 @@ module.exports = function table(config){
 								this.settlePlayerBet(player,bet,state);
 							}else{
 								var state = 'won';
-								this.settlePlayerBet(player,bet.state);
+								this.settlePlayerBet(player,bet,state);
 							}
 						}
 					}
